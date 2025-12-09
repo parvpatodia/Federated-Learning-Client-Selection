@@ -16,7 +16,7 @@ class RandomSelection:
         self.seed = seed
         np.random.seed(seed)
     
-    def select(self, clients: List[Client], budget: float, k: int = None) -> List[Client]:
+    def select(self, clients: List[Client], budget: float, k: int = None) -> Tuple[List[Client], float]:
         """
         Select clients randomly
         
@@ -26,7 +26,7 @@ class RandomSelection:
             k: Number of clients to select (if None, select as many as fit budget)
             
         Returns:
-            List of selected clients
+            Tuple of (selected clients, total cost)
         """
         np.random.seed(self.seed)
         
@@ -44,10 +44,13 @@ class RandomSelection:
                     selected.append(client)
                     total_cost += cost
             
-            return selected
+            return selected, total_cost
         else:
             # Select exactly k clients randomly
-            return list(np.random.choice(clients, size=min(k, len(clients)), replace=False))
+            selected = list(np.random.choice(clients, size=min(k, len(clients)), replace=False))
+            total_cost = MetricsCalculator.calculate_communication_cost(selected)
+            return selected, total_cost
+
 
 
 class GreedySelection:

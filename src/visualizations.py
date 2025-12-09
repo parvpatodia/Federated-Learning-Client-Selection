@@ -81,7 +81,8 @@ class ResultsVisualizer:
         
         algorithms = list(summary_dict.keys())
         final_accuracies = [summary_dict[algo]['final_accuracy'] for algo in algorithms]
-        avg_costs = [summary_dict[algo]['avg_communication_cost'] for algo in algorithms]
+        # Use total_communication instead of avg_communication_cost
+        total_costs = [summary_dict[algo]['total_communication'] for algo in algorithms]
         
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
         
@@ -93,12 +94,12 @@ class ResultsVisualizer:
         for i, v in enumerate(final_accuracies):
             ax1.text(i, v + 0.02, f'{v:.3f}', ha='center', fontsize=10)
         
-        # Average Communication Cost
-        ax2.bar(algorithms, avg_costs, color=['#1f77b4', '#ff7f0e', '#2ca02c'])
-        ax2.set_ylabel('Average Communication Cost', fontsize=12)
-        ax2.set_title(f'Avg Communication Cost - {scenario}', fontsize=12)
-        for i, v in enumerate(avg_costs):
-            ax2.text(i, v + 0.01, f'{v:.3f}', ha='center', fontsize=10)
+        # Total Communication Cost
+        ax2.bar(algorithms, total_costs, color=['#1f77b4', '#ff7f0e', '#2ca02c'])
+        ax2.set_ylabel('Total Communication Cost', fontsize=12)
+        ax2.set_title(f'Total Communication Cost - {scenario}', fontsize=12)
+        for i, v in enumerate(total_costs):
+            ax2.text(i, v + 0.5, f'{v:.1f}', ha='center', fontsize=10)
         
         plt.tight_layout()
         plt.savefig(output_path, dpi=300)
