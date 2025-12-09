@@ -326,7 +326,7 @@ Components:
 -  To understand problem difficulty
 -  NOT recommended for production
 
-### Greedy Selection ⭐ RECOMMENDED
+### Greedy Selection (RECOMMENDED)
 -  Production federated learning systems
 -  Large client populations (N > 100)
 -  When speed and quality matter equally
