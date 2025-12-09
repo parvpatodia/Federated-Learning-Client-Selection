@@ -81,8 +81,16 @@ class ResultsVisualizer:
         
         algorithms = list(summary_dict.keys())
         final_accuracies = [summary_dict[algo]['final_accuracy'] for algo in algorithms]
-        # Use total_communication instead of avg_communication_cost
-        total_costs = [summary_dict[algo]['total_communication'] for algo in algorithms]
+        
+        # Calculate total communication cost for each algorithm
+        total_costs = []
+        for algo in algorithms:
+            if 'total_communication' in summary_dict[algo]:
+                # From synthetic experiments
+                total_costs.append(summary_dict[algo]['total_communication'])
+            else:
+                # From real data experiments
+                total_costs.append(sum(summary_dict[algo]['communication_costs']))
         
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
         
@@ -99,12 +107,13 @@ class ResultsVisualizer:
         ax2.set_ylabel('Total Communication Cost', fontsize=12)
         ax2.set_title(f'Total Communication Cost - {scenario}', fontsize=12)
         for i, v in enumerate(total_costs):
-            ax2.text(i, v + 0.5, f'{v:.1f}', ha='center', fontsize=10)
+            ax2.text(i, v + 1, f'{v:.1f}', ha='center', fontsize=10)
         
         plt.tight_layout()
         plt.savefig(output_path, dpi=300)
         plt.close()
         print(f"Saved: {output_path}")
+
 
 
 if __name__ == "__main__":

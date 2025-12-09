@@ -9,6 +9,7 @@ import sys
 import os
 from typing import Dict, List, Tuple
 import json
+from src.femnist_loader import FemnistDataLoader
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -258,6 +259,69 @@ class ExperimentRunner:
             json.dump(self.results, f, indent=2)
         
         print(f"Results saved to: {json_path}")
+
+    def run_with_real_data(self):
+        """Run experiments with real FEMNIST data"""
+        print("\n" + "="*70)
+        print("EXPERIMENTS WITH REAL FEDERATED LEARNING DATA (FEMNIST)")
+        print("="*70)
+        
+        loader = FemnistDataLoader()
+        real_clients = loader.load_clients(num_clients=100)
+        
+        # Print statistics
+        stats = loader.get_statistics(real_clients)
+        print(f"\nDataset Statistics:")
+        for key, value in stats.items():
+            if isinstance(value, float):
+                print(f"  {key}: {value:.4f}")
+            else:
+                print(f"  {key}: {value}")
+        
+        # Run experiments with real data
+        budget = self.calculate_budget(real_clients, divisor=2.0)
+        
+        # Run each algorithm
+        algorithms = {
+            'Random': RandomSelection(seed=42),
+            'Greedy': GreedySelection(),
+            'DynamicProgramming': DynamicProgramming()
+        }
+        
+        real_data_results = {}
+        
+        for algo_name, algorithm in algorithms.items():
+            print(f"\nRunning {algo_name} with real data...")
+            
+            run_accuracies = []
+            run_costs = []
+            
+            for run_num in range(self.num_runs):
+                simulator = FederatedLearningSimulator(
+                    clients=real_clients,
+                    selection_algorithm=algorithm,
+                    budget=budget,
+                    seed=42 + run_num
+                )
+                
+                simulator.run_training(num_rounds=self.num_rounds)
+                run_accuracies.append(simulator.accuracy_history)
+                run_costs.append(simulator.communication_costs)
+            
+            mean_accuracy = np.mean(run_accuracies, axis=0)
+            mean_cost = np.mean(run_costs, axis=0)
+            
+            real_data_results[algo_name] = {
+                'accuracy_history': mean_accuracy.tolist(),
+                'communication_costs': mean_cost.tolist(),
+                'final_accuracy': mean_accuracy[-1],
+            }
+            
+            print(f"  Final Accuracy: {mean_accuracy[-1]:.4f}")
+            print(f"  Avg Cost per round: {np.mean(mean_cost):.4f}")
+        
+        return real_data_results
+
 
 
 def main():
