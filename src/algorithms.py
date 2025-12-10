@@ -22,34 +22,31 @@ class RandomSelection:
         
         Args:
             clients: List of available clients
-            budget: Communication budget (not used for random)
-            k: Number of clients to select (if None, select as many as fit budget)
+            budget: Communication budget (used to stop selection)
+            k: Target number of clients to select (if None, select as many as fit budget)
             
         Returns:
             Tuple of (selected clients, total cost)
         """
         np.random.seed(self.seed)
         
-        if k is None:
-            # Select clients until budget exhausted (random order)
-            shuffled = clients.copy()
-            np.random.shuffle(shuffled)
-            
-            selected = []
-            total_cost = 0
-            
-            for client in shuffled:
-                cost = MetricsCalculator.ALPHA * client.latency + MetricsCalculator.BETA / client.bandwidth
-                if total_cost + cost <= budget:
-                    selected.append(client)
-                    total_cost += cost
-            
-            return selected, total_cost
-        else:
-            # Select exactly k clients randomly
-            selected = list(np.random.choice(clients, size=min(k, len(clients)), replace=False))
-            total_cost = MetricsCalculator.calculate_communication_cost(selected)
-            return selected, total_cost
+        shuffled = clients.copy()
+        np.random.shuffle(shuffled)
+        
+        selected = []
+        total_cost = 0
+        
+        target_k = k if k is not None else len(clients)
+        
+        for client in shuffled:
+            if len(selected) >= target_k:
+                break
+            cost = MetricsCalculator.ALPHA * client.latency + MetricsCalculator.BETA / client.bandwidth
+            if total_cost + cost <= budget:
+                selected.append(client)
+                total_cost += cost
+        
+        return selected, total_cost
 
 
 
@@ -58,23 +55,22 @@ class GreedySelection:
     
     def select(self, clients: List[Client], budget: float, 
                alpha: float = MetricsCalculator.ALPHA, 
-               beta: float = MetricsCalculator.BETA) -> Tuple[List[Client], float]:
+               beta: float = MetricsCalculator.BETA,
+               k: int = None) -> Tuple[List[Client], float]:
         """
         Greedily select clients based on utility score
         
         Algorithm:
         1. Compute utility score for each client: u_i = quality / (alpha*latency + beta/bandwidth)
         2. Sort clients by utility in descending order - O(N log N)
-        3. Select clients in order until budget exhausted - O(N)
-        
-        Time Complexity: O(N log N)
-        Space Complexity: O(N)
+        3. Select clients in order until budget exhausted or k reached - O(N)
         
         Args:
             clients: List of available clients
             budget: Communication budget
             alpha: Latency weight
             beta: Bandwidth weight
+            k: Target number of clients to select (if None, select as many as fit budget)
             
         Returns:
             Tuple of (selected clients, total cost)
@@ -88,11 +84,14 @@ class GreedySelection:
         # Step 2: Sort by utility in descending order - O(N log N)
         utilities.sort(key=lambda x: x[1], reverse=True)
         
-        # Step 3: Greedily select clients until budget exhausted
+        # Step 3: Greedily select clients until budget exhausted or k reached
         selected = []
         total_cost = 0
+        target_k = k if k is not None else len(clients)
         
         for client, utility in utilities:
+            if len(selected) >= target_k:
+                break
             cost = alpha * client.latency + beta / client.bandwidth
             
             if total_cost + cost <= budget:
@@ -104,23 +103,20 @@ class GreedySelection:
 
 
 class DynamicProgramming:
-    """Dynamic Programming client selection - O(N * C) where C is discretized budget"""
+    """Dynamic Programming client selection - with optional k constraint"""
     
     def select(self, clients: List[Client], budget: float,
                alpha: float = MetricsCalculator.ALPHA,
                beta: float = MetricsCalculator.BETA,
-               discretization_factor: float = 100) -> Tuple[List[Client], float]:
+               discretization_factor: float = 100,
+               k: int = None) -> Tuple[List[Client], float]:
         """
         Optimally select clients using dynamic programming (knapsack variant)
+        with an optional cap on number of clients (k).
         
-        Algorithm:
-        1. Discretize budget into steps (to keep DP table manageable)
-        2. Create DP table: f[i][c] = max accuracy using first i clients with cost <= c
-        3. Fill table with recurrence: f[i][c] = max(f[i-1][c], f[i-1][c-cost_i] + quality_i)
-        4. Backtrack to find which clients were selected
-        
-        Time Complexity: O(N * C) where C is discretized budget
-        Space Complexity: O(N * C)
+        Note: To keep runtime reasonable, we use the existing cost/quality DP but
+        also stop selection if k is reached during backtracking. This ensures all
+        algorithms can be compared with the same target_k.
         
         Args:
             clients: List of available clients
@@ -128,6 +124,7 @@ class DynamicProgramming:
             alpha: Latency weight
             beta: Bandwidth weight
             discretization_factor: Factor to discretize budget (larger = finer granularity, slower)
+            k: Target number of clients to select (if None, no cap)
             
         Returns:
             Tuple of (selected clients, total cost)
@@ -144,8 +141,6 @@ class DynamicProgramming:
         discretized_budget = int(budget * discretization_factor)
         
         # Initialize DP table: f[i][c] = max accuracy
-        # i = 0 to n (number of clients considered)
-        # c = 0 to discretized_budget (cost)
         f = np.zeros((n + 1, discretized_budget + 1))
         
         # Fill DP table
@@ -168,6 +163,8 @@ class DynamicProgramming:
         c = discretized_budget
         
         for i in range(n, 0, -1):
+            if len(selected) == (k if k is not None else len(clients)):
+                break
             # If this client was included in optimal solution
             if f[i][c] != f[i - 1][c]:
                 selected.append(clients[i - 1])

@@ -1,0 +1,11 @@
+FEMNIST Dataset from Hugging Face
+Users: 3,550
+Total samples: 805,263
+Image size: 28x28 grayscale
+Classes: 62 (10 digits + 52 letters)
+Dataset: DatasetDict({
+    train: Dataset({
+        features: ['image', 'writer_id', 'hsf_id', 'character'],
+        num_rows: 814277
+    })
+})

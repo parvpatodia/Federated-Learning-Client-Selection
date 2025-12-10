@@ -12,7 +12,7 @@ from .metrics import MetricsCalculator
 class FederatedLearningSimulator:
     """Simulates federated learning training with a given client selection algorithm"""
     
-    def __init__(self, clients: List[Client], selection_algorithm, budget: float, seed=42):
+    def __init__(self, clients: List[Client], selection_algorithm, budget: float, seed=42, target_k: int = None):
         """
         Initialize simulator
         
@@ -21,11 +21,13 @@ class FederatedLearningSimulator:
             selection_algorithm: Algorithm object with select() method
             budget: Communication budget per round
             seed: Random seed for reproducibility
+            target_k: Target number of clients to select per round (for fair comparison)
         """
         self.clients = clients
         self.algorithm = selection_algorithm
         self.budget = budget
         self.seed = seed
+        self.target_k = target_k
         
         self.accuracy_history = []
         self.communication_costs = []
@@ -40,7 +42,11 @@ class FederatedLearningSimulator:
             Dictionary with round metrics
         """
         # Select clients using the algorithm
-        selected, cost = self.algorithm.select(self.clients, self.budget)
+        try:
+            selected, cost = self.algorithm.select(self.clients, self.budget, k=self.target_k)
+        except TypeError:
+            # Fallback for algorithms that don't support k
+            selected, cost = self.algorithm.select(self.clients, self.budget)
         
         self.selected_clients_history.append(selected)
         self.communication_costs.append(cost)
@@ -134,7 +140,7 @@ if __name__ == "__main__":
     from .data_generator import ClientSimulator
     from .algorithms import RandomSelection, GreedySelection, DynamicProgramming
     
-    print("Testing FederatedLearningSimulator...")
+    print("Testing FederatedLearningSimulator")
     
     simulator_gen = ClientSimulator(num_clients=50)
     clients = simulator_gen.generate_clients()
