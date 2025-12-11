@@ -20,9 +20,3 @@ build/
 .DS_Store
 Thumbs.db
 
-# Project
-results/
-*.csv
-*.png
-*.jpg
-.ipynb_checkpoints/

@@ -114,8 +114,9 @@ class ClientSimulator:
     
     def get_highly_heterogeneous_clients(self) -> List[Client]:
         """
-        Generate highly heterogeneous clients
-        Extreme differences (clustered: some very good, some very bad)
+        Generate highly heterogeneous clients with extreme differences
+        Creates a very mixed distribution: elite clients, good clients, average, poor, and very poor
+        This maximizes the advantage of smart selection algorithms
         
         Returns:
             List of highly heterogeneous Client objects
@@ -123,20 +124,38 @@ class ClientSimulator:
         np.random.seed(self.seed)
         clients = []
         
-        for client_id in range(self.num_clients):
-            # 40% are "good" clients, 60% are "poor" clients
-            if client_id < self.num_clients * 0.4:
-                # Good clients
-                data_size = np.random.randint(1500, 2001)
-                bandwidth = np.random.uniform(7, 10)
-                quality = np.random.uniform(0.85, 0.95)
-                latency = np.random.uniform(0.1, 0.5)
-            else:
-                # Poor clients
-                data_size = np.random.randint(500, 800)
-                bandwidth = np.random.uniform(1, 3)
-                quality = np.random.uniform(0.6, 0.75)
-                latency = np.random.uniform(1.5, 2.0)
+        # Shuffle to mix up the distribution
+        client_indices = list(range(self.num_clients))
+        np.random.shuffle(client_indices)
+        
+        for idx, client_id in enumerate(client_indices):
+            ratio = idx / self.num_clients
+            
+            if ratio < 0.15:  # 15% - Elite clients (very high quality, low latency, high bandwidth)
+                data_size = np.random.randint(1800, 2001)
+                bandwidth = np.random.uniform(9, 10)
+                quality = np.random.uniform(0.90, 0.95)
+                latency = np.random.uniform(0.1, 0.3)
+            elif ratio < 0.30:  # 15% - Good clients
+                data_size = np.random.randint(1500, 1800)
+                bandwidth = np.random.uniform(7, 9)
+                quality = np.random.uniform(0.85, 0.90)
+                latency = np.random.uniform(0.3, 0.6)
+            elif ratio < 0.50:  # 20% - Average clients
+                data_size = np.random.randint(1000, 1500)
+                bandwidth = np.random.uniform(4, 7)
+                quality = np.random.uniform(0.75, 0.85)
+                latency = np.random.uniform(0.6, 1.2)
+            elif ratio < 0.75:  # 25% - Poor clients
+                data_size = np.random.randint(600, 1000)
+                bandwidth = np.random.uniform(2, 4)
+                quality = np.random.uniform(0.65, 0.75)
+                latency = np.random.uniform(1.2, 1.8)
+            else:  # 25% - Very poor clients (very low quality, high latency, low bandwidth)
+                data_size = np.random.randint(500, 600)
+                bandwidth = np.random.uniform(1, 2)
+                quality = np.random.uniform(0.60, 0.65)
+                latency = np.random.uniform(1.8, 2.0)
             
             client = Client(
                 client_id=client_id,

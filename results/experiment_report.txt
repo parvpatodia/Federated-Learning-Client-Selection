@@ -1,0 +1,109 @@
+================================================================================
+FEDERATED LEARNING CLIENT SELECTION ALGORITHMS - EXPERIMENT REPORT
+================================================================================
+
+Experiment Configuration:
+  Number of clients: 50
+  Number of runs per scenario: 10
+  Training rounds per run: 20
+  Metrics: Alpha (latency weight) = 1.0
+  Metrics: Beta (bandwidth weight) = 1.0
+
+
+================================================================================
+SCENARIO: Homogeneous
+================================================================================
+
+
+Random:
+  Final Accuracy:        0.7700 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   567.2727
+  Accuracy History:      ['0.0385', '0.0770', '0.1155', '0.1540', '0.1925'] ... (first 5 rounds)
+
+
+Greedy:
+  Final Accuracy:        0.7700 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   567.2727
+  Accuracy History:      ['0.0385', '0.0770', '0.1155', '0.1540', '0.1925'] ... (first 5 rounds)
+
+
+DynamicProgramming:
+  Final Accuracy:        0.7700 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   590.9091
+  Accuracy History:      ['0.0385', '0.0770', '0.1155', '0.1540', '0.1925'] ... (first 5 rounds)
+
+
+================================================================================
+SCENARIO: ModeratelyHeterogeneous
+================================================================================
+
+
+Random:
+  Final Accuracy:        0.7694 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   657.2506
+  Accuracy History:      ['0.0385', '0.0769', '0.1154', '0.1539', '0.1924'] ... (first 5 rounds)
+
+
+Greedy:
+  Final Accuracy:        0.7588 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   649.9842
+  Accuracy History:      ['0.0379', '0.0759', '0.1138', '0.1518', '0.1897'] ... (first 5 rounds)
+
+
+DynamicProgramming:
+  Final Accuracy:        0.7663 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   661.3490
+  Accuracy History:      ['0.0383', '0.0766', '0.1149', '0.1533', '0.1916'] ... (first 5 rounds)
+
+
+================================================================================
+SCENARIO: HighlyHeterogeneous
+================================================================================
+
+
+Random:
+  Final Accuracy:        0.7832 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   761.9947
+  Accuracy History:      ['0.0392', '0.0783', '0.1175', '0.1566', '0.1958'] ... (first 5 rounds)
+
+
+Greedy:
+  Final Accuracy:        0.8136 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   763.0865
+  Accuracy History:      ['0.0407', '0.0814', '0.1220', '0.1627', '0.2034'] ... (first 5 rounds)
+
+
+DynamicProgramming:
+  Final Accuracy:        0.8162 ± 0.0000
+  Convergence Speed:     20.0 ± 0.0 rounds
+  Total Communication:   768.9232
+  Accuracy History:      ['0.0408', '0.0816', '0.1224', '0.1632', '0.2041'] ... (first 5 rounds)
+
+
+================================================================================
+SUMMARY AND INSIGHTS
+================================================================================
+
+
+Homogeneous:
+  Best Accuracy:         Random (0.7700)
+  Best Efficiency:       Random (567.2727 total cost)
+  Greedy/DP Approximation Ratio: 1.0000
+
+ModeratelyHeterogeneous:
+  Best Accuracy:         Random (0.7694)
+  Best Efficiency:       Greedy (649.9842 total cost)
+  Greedy/DP Approximation Ratio: 0.9903
+
+HighlyHeterogeneous:
+  Best Accuracy:         DynamicProgramming (0.8162)
+  Best Efficiency:       Random (761.9947 total cost)
+  Greedy/DP Approximation Ratio: 0.9967

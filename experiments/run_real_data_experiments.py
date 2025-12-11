@@ -16,9 +16,6 @@ import numpy as np
 
 
 def main():
-    print("="*70)
-    print("FEDERATED LEARNING WITH REAL DATA (FEMNIST)")
-    print("="*70)
     
     # Load real data
     loader = FemnistDataLoader()
@@ -113,7 +110,6 @@ def main():
         output_path='results/real_data/summary_real_data.png'
     )
     
-    print("\n All visualizations generated")
     
     # Print comparison
     print(f"\n{'='*70}")
@@ -133,9 +129,6 @@ def main():
     greedy_improvement = ((greedy_acc - random_acc) / random_acc) * 100
     dp_improvement = ((dp_acc - random_acc) / random_acc) * 100
     
-    print(f"{'='*70}")
-    print("INSIGHTS")
-    print(f"{'='*70}")
     print(f"Greedy vs Random: {greedy_improvement:+.2f}% accuracy improvement")
     print(f"DP vs Random:     {dp_improvement:+.2f}% accuracy improvement")
     print(f"Greedy vs DP:     {((greedy_acc - dp_acc) / dp_acc) * 100:+.2f}% accuracy difference")

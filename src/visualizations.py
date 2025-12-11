@@ -35,9 +35,20 @@ class ResultsVisualizer:
         plt.legend(fontsize=10)
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig(output_path, dpi=300)
-        plt.close()
-        print(f"Saved: {output_path}")
+        try:
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f"Saved: {output_path}")
+        except Exception as e:
+            plt.close()
+            print(f"Warning: Could not save {output_path}: {e}")
+            # Try alternative path
+            try:
+                alt_path = os.path.join(os.getcwd(), os.path.basename(output_path))
+                plt.savefig(alt_path, dpi=300, bbox_inches='tight')
+                print(f"Saved to alternative path: {alt_path}")
+            except:
+                print(f"Failed to save visualization")
     
     @staticmethod
     def plot_communication_cost_comparison(results_dict: Dict[str, Dict], output_path: str = "results/communication_cost.png"):
@@ -63,9 +74,20 @@ class ResultsVisualizer:
         plt.legend(fontsize=10)
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig(output_path, dpi=300)
-        plt.close()
-        print(f"Saved: {output_path}")
+        try:
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f"Saved: {output_path}")
+        except Exception as e:
+            plt.close()
+            print(f"Warning: Could not save {output_path}: {e}")
+            # Try alternative path
+            try:
+                alt_path = os.path.join(os.getcwd(), os.path.basename(output_path))
+                plt.savefig(alt_path, dpi=300, bbox_inches='tight')
+                print(f"Saved to alternative path: {alt_path}")
+            except:
+                print(f"Failed to save visualization")
     
     @staticmethod
     def plot_summary_comparison(summary_dict: Dict[str, Dict], scenario: str, output_path: str = "results/summary_comparison.png"):
@@ -77,7 +99,10 @@ class ResultsVisualizer:
             scenario: Name of the scenario (e.g., "Homogeneous")
             output_path: Path to save the plot
         """
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        # Ensure directory exists
+        dir_path = os.path.dirname(output_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
         
         algorithms = list(summary_dict.keys())
         final_accuracies = [summary_dict[algo]['final_accuracy'] for algo in algorithms]
@@ -110,9 +135,20 @@ class ResultsVisualizer:
             ax2.text(i, v + 1, f'{v:.1f}', ha='center', fontsize=10)
         
         plt.tight_layout()
-        plt.savefig(output_path, dpi=300)
-        plt.close()
-        print(f"Saved: {output_path}")
+        try:
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f"Saved: {output_path}")
+        except Exception as e:
+            plt.close()
+            print(f"Warning: Could not save {output_path}: {e}")
+            # Try alternative path
+            try:
+                alt_path = os.path.join(os.getcwd(), os.path.basename(output_path))
+                plt.savefig(alt_path, dpi=300, bbox_inches='tight')
+                print(f"Saved to alternative path: {alt_path}")
+            except Exception as e2:
+                print(f"Failed to save visualization: {e2}")
 
 
 

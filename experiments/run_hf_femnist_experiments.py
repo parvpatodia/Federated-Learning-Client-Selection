@@ -17,7 +17,6 @@ from src.metrics import MetricsCalculator
 
 
 def calculate_quality_metrics(qualities: List[float]) -> Dict[str, float]:
-    """Calculate advanced statistics for quality values"""
     if not qualities:
         return {
             'mean': 0.0,
@@ -39,7 +38,6 @@ def calculate_quality_metrics(qualities: List[float]) -> Dict[str, float]:
 
 
 def print_quality_metrics(algorithm_name: str, metrics: Dict[str, float]):
-    """Print quality metrics in a formatted way"""
     print(f"\n   Quality Statistics for {algorithm_name}:")
     print(f"      Mean:     {metrics['mean']:.6f}")
     print(f"      Median:   {metrics['median']:.6f}")
@@ -50,7 +48,6 @@ def print_quality_metrics(algorithm_name: str, metrics: Dict[str, float]):
 
 
 def generate_visualizations(results: Dict, output_dir: str):
-    """Generate comprehensive visualizations for the results"""
     os.makedirs(output_dir, exist_ok=True)
     
     algorithms = list(results.keys())
@@ -187,7 +184,6 @@ def generate_visualizations(results: Dict, output_dir: str):
 
 
 def generate_dataset_visualizations(dataset_stats: Dict, output_dir: str):
-    """Generate visualizations for the FEMNIST dataset statistics"""
     os.makedirs(output_dir, exist_ok=True)
     
     fig = plt.figure(figsize=(16, 10))
@@ -306,7 +302,6 @@ Labels per Client:
 
 
 def generate_accuracy_visualizations(results: Dict, output_dir: str):
-    """Generate accuracy vs rounds visualizations"""
     os.makedirs(output_dir, exist_ok=True)
     
     algorithms = list(results.keys())
@@ -354,10 +349,6 @@ def generate_accuracy_visualizations(results: Dict, output_dir: str):
     plt.close()
     print(f" Saved accuracy visualization: {output_path}")
 
-
-print("\n" + "="*80)
-print("REAL FEMNIST - CLIENT SELECTION")
-print("="*80 + "\n")
 
 # Load real data
 clients = HFfemnistLoader.load_femnist(num_clients=100)
@@ -489,11 +480,7 @@ generate_accuracy_visualizations(results, output_dir)
 # Generate quality metrics visualizations
 generate_visualizations(results, output_dir)
 
-print("\n" + "="*80)
-print(" Visualizations generated!")
-print("="*80)
 
-# Print comprehensive summary
 print("\n" + "="*80)
 print("RESULTS SUMMARY")
 print("="*80)

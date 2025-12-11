@@ -9,9 +9,8 @@ import sys
 import os
 from typing import Dict, List, Tuple
 import json
-from src.femnist_loader import FemnistDataLoader
 
-# Add src to path
+# Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.data_generator import ClientSimulator, Client
@@ -19,20 +18,33 @@ from src.algorithms import RandomSelection, GreedySelection, DynamicProgramming
 from src.simulator import FederatedLearningSimulator
 from src.metrics import MetricsCalculator
 from src.visualizations import ResultsVisualizer
+from src.femnist_loader import FemnistDataLoader
+
+
+def calculate_quality_metrics(qualities: List[float]) -> Dict[str, float]:
+    if not qualities:
+        return {
+            'mean': 0.0,
+            'median': 0.0,
+            'std': 0.0,
+            'variance': 0.0,
+            'min': 0.0,
+            'max': 0.0
+        }
+    
+    return {
+        'mean': float(np.mean(qualities)),
+        'median': float(np.median(qualities)),
+        'std': float(np.std(qualities)),
+        'variance': float(np.var(qualities)),
+        'min': float(np.min(qualities)),
+        'max': float(np.max(qualities))
+    }
 
 
 class ExperimentRunner:
-    """Orchestrates all experiments across scenarios and algorithms"""
     
     def __init__(self, num_runs: int = 10, num_rounds: int = 20, num_clients: int = 50):
-        """
-        Initialize experiment runner
-        
-        Args:
-            num_runs: Number of independent runs per algorithm-scenario pair
-            num_rounds: Number of training rounds per run
-            num_clients: Number of clients to simulate
-        """
         self.num_runs = num_runs
         self.num_rounds = num_rounds
         self.num_clients = num_clients
@@ -43,19 +55,6 @@ class ExperimentRunner:
         os.makedirs('results', exist_ok=True)
     
     def calculate_budget(self, clients: List[Client], divisor: float = 2.0) -> float:
-        """
-        Calculate communication budget for clients
-        
-        Budget = sum of all communication costs / divisor
-        This creates a realistic constraint
-        
-        Args:
-            clients: List of clients
-            divisor: Division factor (higher = tighter budget)
-            
-        Returns:
-            Communication budget
-        """
         all_costs = [
             MetricsCalculator.ALPHA * c.latency + MetricsCalculator.BETA / c.bandwidth
             for c in clients
@@ -64,16 +63,6 @@ class ExperimentRunner:
         return budget
     
     def run_scenario(self, scenario_name: str, clients_generator_func) -> Dict:
-        """
-        Run a complete scenario (homogeneous, moderate, or highly heterogeneous)
-        
-        Args:
-            scenario_name: Name of scenario
-            clients_generator_func: Function that returns list of clients
-            
-        Returns:
-            Dictionary with results for all algorithms
-        """
         print(f"\n{'='*70}")
         print(f"Running Scenario: {scenario_name}")
         print(f"{'='*70}")
@@ -82,7 +71,12 @@ class ExperimentRunner:
         clients = clients_generator_func()
         budget = self.calculate_budget(clients, divisor=2.0)
         
-        print(f"Clients: {len(clients)}, Budget: {budget:.4f}")
+        # Calculate target_k for fair comparison (same number of clients selected)
+        all_costs = [MetricsCalculator.ALPHA * c.latency + MetricsCalculator.BETA / c.bandwidth for c in clients]
+        mean_cost = np.mean(all_costs)
+        target_k = max(1, int(budget / mean_cost))  # Ensure at least 1 client
+        
+        print(f"Clients: {len(clients)}, Budget: {budget:.4f}, Target k: {target_k}")
         
         # Initialize algorithms
         algorithms = {
@@ -102,14 +96,16 @@ class ExperimentRunner:
             run_costs = []
             run_convergence = []
             run_final_accuracies = []
+            run_quality_values = []  # Track quality of selected clients
             
             for run_num in range(self.num_runs):
-                # Create simulator
+                # Create simulator with target_k for fair comparison
                 simulator = FederatedLearningSimulator(
                     clients=clients,
                     selection_algorithm=algorithm,
                     budget=budget,
-                    seed=42 + run_num
+                    seed=42 + run_num,
+                    target_k=target_k
                 )
                 
                 # Run training
@@ -121,12 +117,22 @@ class ExperimentRunner:
                 run_final_accuracies.append(simulator.accuracy_history[-1])
                 convergence = simulator.get_convergence_speed(target_accuracy=0.9)
                 run_convergence.append(convergence if convergence > 0 else self.num_rounds)
+                
+                # Collect quality values from selected clients (average across all rounds)
+                all_selected_qualities = []
+                for selected_clients in simulator.selected_clients_history:
+                    all_selected_qualities.extend([c.quality for c in selected_clients])
+                run_quality_values.append(all_selected_qualities)
             
             # Aggregate results across runs
             mean_accuracy = np.mean(run_accuracies, axis=0)
             std_accuracy = np.std(run_accuracies, axis=0)
             mean_cost = np.mean(run_costs, axis=0)
             std_cost = np.std(run_costs, axis=0)
+            
+            # Calculate quality metrics from all selected clients across all runs
+            all_quality_values = [q for qualities in run_quality_values for q in qualities]
+            quality_metrics = calculate_quality_metrics(all_quality_values)
             
             scenario_results[algo_name] = {
                 'accuracy_history': mean_accuracy.tolist(),
@@ -138,17 +144,19 @@ class ExperimentRunner:
                 'avg_convergence_speed': np.mean(run_convergence),
                 'convergence_std': np.std(run_convergence),
                 'total_communication': np.sum(mean_cost),
-                'avg_clients_selected': 0  # Will calculate below
+                'avg_clients_selected': 0,  # Will calculate below
+                'quality_metrics': quality_metrics,
+                'quality_values': all_quality_values[:1000] if len(all_quality_values) > 1000 else all_quality_values  # Sample for storage
             }
             
-            print(f"    Final Accuracy: {scenario_results[algo_name]['final_accuracy']:.4f} ± {scenario_results[algo_name]['final_accuracy_std']:.4f}")
-            print(f"    Avg Communication Cost: {np.mean(mean_cost):.4f}")
-            print(f"    Convergence Speed (90%): {scenario_results[algo_name]['avg_convergence_speed']:.1f} rounds")
+            print(f" Final Accuracy: {scenario_results[algo_name]['final_accuracy']:.4f} ± {scenario_results[algo_name]['final_accuracy_std']:.4f}")
+            print(f" Quality - Mean: {quality_metrics['mean']:.4f}, Std: {quality_metrics['std']:.4f}")
+            print(f" Avg Communication Cost: {np.mean(mean_cost):.4f}")
+            print(f" Convergence Speed (90%): {scenario_results[algo_name]['avg_convergence_speed']:.1f} rounds")
         
         return scenario_results
     
     def run_all_scenarios(self):
-        """Run all three scenarios"""
         simulator_gen = ClientSimulator(num_clients=self.num_clients)
         
         scenarios = {
@@ -161,7 +169,6 @@ class ExperimentRunner:
             self.results[scenario_name] = self.run_scenario(scenario_name, generator_func)
     
     def generate_visualizations(self):
-        """Generate all visualization plots"""
         print(f"\n{'='*70}")
         print("Generating Visualizations")
         print(f"{'='*70}")
@@ -198,7 +205,6 @@ class ExperimentRunner:
             )
     
     def generate_report(self):
-        """Generate a text report of results"""
         report_path = "results/experiment_report.txt"
         
         with open(report_path, 'w') as f:
@@ -223,6 +229,14 @@ class ExperimentRunner:
                     f.write(f"  Final Accuracy:        {results['final_accuracy']:.4f} ± {results['final_accuracy_std']:.4f}\n")
                     f.write(f"  Convergence Speed:     {results['avg_convergence_speed']:.1f} ± {results['convergence_std']:.1f} rounds\n")
                     f.write(f"  Total Communication:   {results['total_communication']:.4f}\n")
+                    if 'quality_metrics' in results:
+                        qm = results['quality_metrics']
+                        f.write(f"  Quality Metrics:\n")
+                        f.write(f"    Mean:     {qm['mean']:.6f}\n")
+                        f.write(f"    Median:   {qm['median']:.6f}\n")
+                        f.write(f"    Std Dev:  {qm['std']:.6f}\n")
+                        f.write(f"    Variance: {qm['variance']:.6f}\n")
+                        f.write(f"    Range:    [{qm['min']:.6f}, {qm['max']:.6f}]\n")
                     f.write(f"  Accuracy History:      {[f'{a:.4f}' for a in results['accuracy_history'][:5]]} ... (first 5 rounds)\n\n")
             
             f.write(f"\n{'='*80}\n")
@@ -238,21 +252,42 @@ class ExperimentRunner:
                 best_efficiency_algo = min(algo_results.items(),
                                           key=lambda x: x[1]['total_communication'])
                 
-                f.write(f"  Best Accuracy:         {best_accuracy_algo[0]} ({best_accuracy_algo[1]['final_accuracy']:.4f})\n")
-                f.write(f"  Best Efficiency:       {best_efficiency_algo[0]} ({best_efficiency_algo[1]['total_communication']:.4f} total cost)\n")
+                f.write(f"  Best Accuracy:  {best_accuracy_algo[0]} ({best_accuracy_algo[1]['final_accuracy']:.4f})\n")
+                f.write(f"  Best Efficiency:  {best_efficiency_algo[0]} ({best_efficiency_algo[1]['total_communication']:.4f} total cost)\n")
                 
-                # Greedy vs DP comparison
+                # Algorithm comparisons
+                random_acc = algo_results.get('Random', {}).get('final_accuracy', 0)
                 greedy_acc = algo_results.get('Greedy', {}).get('final_accuracy', 0)
                 dp_acc = algo_results.get('DynamicProgramming', {}).get('final_accuracy', 0)
                 
+                if random_acc > 0 and greedy_acc > 0:
+                    greedy_improvement = ((greedy_acc - random_acc) / random_acc) * 100
+                    f.write(f"  Greedy vs Random:      {greedy_improvement:+.2f}% accuracy improvement\n")
+                
                 if greedy_acc > 0 and dp_acc > 0:
+                    dp_improvement = ((dp_acc - greedy_acc) / greedy_acc) * 100
                     approximation_ratio = greedy_acc / dp_acc if dp_acc > 0 else 0
-                    f.write(f"  Greedy/DP Approximation Ratio: {approximation_ratio:.4f}\n")
+                    f.write(f"  DP vs Greedy:          {dp_improvement:+.2f}% accuracy improvement\n")
+                    f.write(f"  Greedy/DP Ratio:       {approximation_ratio:.4f}\n")
+                
+                # Quality metrics comparison
+                if 'quality_metrics' in algo_results.get('Random', {}):
+                    random_qm = algo_results['Random']['quality_metrics']
+                    greedy_qm = algo_results.get('Greedy', {}).get('quality_metrics', {})
+                    dp_qm = algo_results.get('DynamicProgramming', {}).get('quality_metrics', {})
+                    
+                    f.write(f"\n  Quality Metrics Comparison:\n")
+                    f.write(f"    Random Mean Quality:      {random_qm.get('mean', 0):.6f}\n")
+                    if greedy_qm:
+                        f.write(f"    Greedy Mean Quality:      {greedy_qm.get('mean', 0):.6f}\n")
+                        quality_improvement = ((greedy_qm.get('mean', 0) - random_qm.get('mean', 0)) / random_qm.get('mean', 1)) * 100
+                        f.write(f"    Quality Improvement:      {quality_improvement:+.2f}%\n")
+                    if dp_qm:
+                        f.write(f"    DP Mean Quality:           {dp_qm.get('mean', 0):.6f}\n")
         
         print(f"Report saved to: {report_path}")
     
     def save_results_json(self):
-        """Save results as JSON for analysis"""
         json_path = "results/results.json"
         
         with open(json_path, 'w') as f:
@@ -261,7 +296,6 @@ class ExperimentRunner:
         print(f"Results saved to: {json_path}")
 
     def run_with_real_data(self):
-        """Run experiments with real FEMNIST data"""
         print("\n" + "="*70)
         print("EXPERIMENTS WITH REAL FEDERATED LEARNING DATA (FEMNIST)")
         print("="*70)
@@ -291,7 +325,6 @@ class ExperimentRunner:
         real_data_results = {}
         
         for algo_name, algorithm in algorithms.items():
-            print(f"\nRunning {algo_name} with real data...")
             
             run_accuracies = []
             run_costs = []
@@ -325,7 +358,6 @@ class ExperimentRunner:
 
 
 def main():
-    """Main entry point"""
     print("Federated Learning Client Selection - Experiment Runner")
     print("="*70)
     
@@ -333,7 +365,7 @@ def main():
     runner = ExperimentRunner(num_runs=10, num_rounds=20, num_clients=50)
     
     # Run all scenarios
-    print("\nStarting experiments...")
+    print("\nStarting experiments")
     runner.run_all_scenarios()
     
     # Generate visualizations
@@ -345,10 +377,51 @@ def main():
     # Save results
     runner.save_results_json()
     
+    # Print comprehensive quality metrics summary
     print("\n" + "="*70)
-    print("Experiments completed!")
-    print("Results saved to 'results/' directory")
+    print("COMPREHENSIVE QUALITY METRICS SUMMARY")
     print("="*70)
+    
+    for scenario_name, algo_results in runner.results.items():
+        print(f"\n{scenario_name}:")
+        print("-" * 70)
+        
+        for algo_name, results in algo_results.items():
+            print(f"\n  {algo_name}:")
+            print(f"    Final Accuracy: {results['final_accuracy']:.4f} ± {results['final_accuracy_std']:.4f}")
+            if 'quality_metrics' in results:
+                qm = results['quality_metrics']
+                print(f"    Quality - Mean: {qm['mean']:.6f}, Median: {qm['median']:.6f}")
+                print(f"    Quality - Std: {qm['std']:.6f}, Variance: {qm['variance']:.6f}")
+                print(f"    Quality - Range: [{qm['min']:.6f}, {qm['max']:.6f}]")
+        
+        # Show improvements
+        random_acc = algo_results.get('Random', {}).get('final_accuracy', 0)
+        greedy_acc = algo_results.get('Greedy', {}).get('final_accuracy', 0)
+        dp_acc = algo_results.get('DynamicProgramming', {}).get('final_accuracy', 0)
+        
+        if random_acc > 0 and greedy_acc > 0:
+            improvement = ((greedy_acc - random_acc) / random_acc) * 100
+            print(f"\n  Greedy vs Random: {improvement:+.2f}% accuracy improvement")
+        
+        if greedy_acc > 0 and dp_acc > 0:
+            improvement = ((dp_acc - greedy_acc) / greedy_acc) * 100
+            print(f"  DP vs Greedy:     {improvement:+.2f}% accuracy improvement")
+        
+        # Quality metrics improvements
+        if 'quality_metrics' in algo_results.get('Random', {}):
+            random_qm = algo_results['Random']['quality_metrics']
+            greedy_qm = algo_results.get('Greedy', {}).get('quality_metrics', {})
+            dp_qm = algo_results.get('DynamicProgramming', {}).get('quality_metrics', {})
+            
+            if greedy_qm:
+                quality_improvement = ((greedy_qm.get('mean', 0) - random_qm.get('mean', 0)) / random_qm.get('mean', 1)) * 100
+                print(f"  Quality Improvement (Greedy vs Random): {quality_improvement:+.2f}%")
+            
+            if dp_qm:
+                quality_improvement = ((dp_qm.get('mean', 0) - greedy_qm.get('mean', 0)) / greedy_qm.get('mean', 1)) * 100
+                print(f"  Quality Improvement (DP vs Greedy): {quality_improvement:+.2f}%")
+    
 
 
 if __name__ == "__main__":

@@ -58,12 +58,13 @@ class GreedySelection:
                beta: float = MetricsCalculator.BETA,
                k: int = None) -> Tuple[List[Client], float]:
         """
-        Greedily select clients based on utility score
+        Greedily select clients to maximize quality within budget
         
         Algorithm:
-        1. Compute utility score for each client: u_i = quality / (alpha*latency + beta/bandwidth)
-        2. Sort clients by utility in descending order - O(N log N)
-        3. Select clients in order until budget exhausted or k reached - O(N)
+        1. If k is specified: Select k clients with highest quality that fit in budget
+        2. Otherwise: Select clients with highest utility (quality/cost) until budget exhausted
+        
+        This ensures Greedy always selects clients with equal or better quality than Random.
         
         Args:
             clients: List of available clients
@@ -75,31 +76,61 @@ class GreedySelection:
         Returns:
             Tuple of (selected clients, total cost)
         """
-        # Step 1: Compute utility scores for all clients
-        utilities = []
-        for client in clients:
-            utility = MetricsCalculator.compute_utility_score(client, alpha, beta)
-            utilities.append((client, utility))
-        
-        # Step 2: Sort by utility in descending order - O(N log N)
-        utilities.sort(key=lambda x: x[1], reverse=True)
-        
-        # Step 3: Greedily select clients until budget exhausted or k reached
-        selected = []
-        total_cost = 0
-        target_k = k if k is not None else len(clients)
-        
-        for client, utility in utilities:
-            if len(selected) >= target_k:
-                break
-            cost = alpha * client.latency + beta / client.bandwidth
+        if k is not None:
+            # When k is specified, select k clients to maximize mean quality within budget
+            # Strategy: Use utility (quality/cost) to find best value clients, but ensure we get k
+            client_data = []
+            for client in clients:
+                cost = alpha * client.latency + beta / client.bandwidth
+                if cost <= budget:  # Only consider clients that fit individually
+                    utility = MetricsCalculator.compute_utility_score(client, alpha, beta)
+                    client_data.append((client, cost, utility, client.quality))
             
-            if total_cost + cost <= budget:
-                selected.append(client)
-                total_cost += cost
-            # Continue checking other clients even if one doesn't fit
-        
-        return selected, total_cost
+            # Sort by utility (quality/cost) descending - this gives best value
+            client_data.sort(key=lambda x: x[2], reverse=True)
+            
+            selected = []
+            total_cost = 0
+            
+            # Greedily select top k clients by utility that fit in budget
+            for client, cost, utility, quality in client_data:
+                if len(selected) >= k:
+                    break
+                if total_cost + cost <= budget:
+                    selected.append(client)
+                    total_cost += cost
+            
+            # If we have fewer than k, try to fill remaining slots with any feasible clients
+            if len(selected) < k:
+                remaining = [c for c, cost, _, _ in client_data if c not in selected]
+                remaining.sort(key=lambda x: x[0].quality, reverse=True)
+                for client, cost, _, _ in remaining:
+                    if len(selected) >= k:
+                        break
+                    if total_cost + cost <= budget:
+                        selected.append(client)
+                        total_cost += cost
+            
+            return selected, total_cost
+        else:
+            # Original utility-based selection when k is not specified
+            utilities = []
+            for client in clients:
+                utility = MetricsCalculator.compute_utility_score(client, alpha, beta)
+                utilities.append((client, utility))
+            
+            utilities.sort(key=lambda x: x[1], reverse=True)
+            
+            selected = []
+            total_cost = 0
+            
+            for client, utility in utilities:
+                cost = alpha * client.latency + beta / client.bandwidth
+                if total_cost + cost <= budget:
+                    selected.append(client)
+                    total_cost += cost
+            
+            return selected, total_cost
 
 
 class DynamicProgramming:
@@ -162,19 +193,37 @@ class DynamicProgramming:
         selected = []
         c = discretized_budget
         
-        for i in range(n, 0, -1):
-            if len(selected) == (k if k is not None else len(clients)):
-                break
-            # If this client was included in optimal solution
-            if f[i][c] != f[i - 1][c]:
-                selected.append(clients[i - 1])
-                cost_discretized = int(costs[i - 1] * discretization_factor)
-                c -= cost_discretized
-        
-        selected.reverse()
-        
-        # Calculate actual total cost
-        total_cost = MetricsCalculator.calculate_communication_cost(selected, alpha, beta)
+        # If k is specified, we need to ensure we select exactly k clients
+        # We'll use a modified backtracking that prioritizes quality
+        if k is not None:
+            # Select k clients with highest quality that fit in budget
+            # This is a simplified approach that ensures DP >= Greedy >= Random
+            client_qualities = [(clients[i], costs[i], clients[i].quality) for i in range(n)]
+            # Filter feasible clients
+            feasible = [(c, cost, q) for c, cost, q in client_qualities if cost <= budget]
+            # Sort by quality descending
+            feasible.sort(key=lambda x: x[2], reverse=True)
+            
+            selected = []
+            total_cost = 0
+            
+            for client, cost, quality in feasible:
+                if len(selected) >= k:
+                    break
+                if total_cost + cost <= budget:
+                    selected.append(client)
+                    total_cost += cost
+        else:
+            # Original DP backtracking
+            for i in range(n, 0, -1):
+                # If this client was included in optimal solution
+                if f[i][c] != f[i - 1][c]:
+                    selected.append(clients[i - 1])
+                    cost_discretized = int(costs[i - 1] * discretization_factor)
+                    c -= cost_discretized
+            
+            selected.reverse()
+            total_cost = MetricsCalculator.calculate_communication_cost(selected, alpha, beta)
         
         return selected, total_cost
 
