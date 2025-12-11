@@ -19,6 +19,12 @@ Random:
   Final Accuracy:        0.7700 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
   Total Communication:   567.2727
+  Quality Metrics:
+    Mean:     0.770000
+    Median:   0.770000
+    Std Dev:  0.000000
+    Variance: 0.000000
+    Range:    [0.770000, 0.770000]
   Accuracy History:      ['0.0385', '0.0770', '0.1155', '0.1540', '0.1925'] ... (first 5 rounds)
 
 
@@ -26,13 +32,25 @@ Greedy:
   Final Accuracy:        0.7700 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
   Total Communication:   567.2727
+  Quality Metrics:
+    Mean:     0.770000
+    Median:   0.770000
+    Std Dev:  0.000000
+    Variance: 0.000000
+    Range:    [0.770000, 0.770000]
   Accuracy History:      ['0.0385', '0.0770', '0.1155', '0.1540', '0.1925'] ... (first 5 rounds)
 
 
 DynamicProgramming:
   Final Accuracy:        0.7700 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
-  Total Communication:   590.9091
+  Total Communication:   567.2727
+  Quality Metrics:
+    Mean:     0.770000
+    Median:   0.770000
+    Std Dev:  0.000000
+    Variance: 0.000000
+    Range:    [0.770000, 0.770000]
   Accuracy History:      ['0.0385', '0.0770', '0.1155', '0.1540', '0.1925'] ... (first 5 rounds)
 
 
@@ -45,21 +63,39 @@ Random:
   Final Accuracy:        0.7694 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
   Total Communication:   657.2506
+  Quality Metrics:
+    Mean:     0.769421
+    Median:   0.782089
+    Std Dev:  0.101961
+    Variance: 0.010396
+    Range:    [0.605806, 0.937971]
   Accuracy History:      ['0.0385', '0.0769', '0.1154', '0.1539', '0.1924'] ... (first 5 rounds)
 
 
 Greedy:
-  Final Accuracy:        0.7588 ± 0.0000
+  Final Accuracy:        0.7651 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
-  Total Communication:   649.9842
-  Accuracy History:      ['0.0379', '0.0759', '0.1138', '0.1518', '0.1897'] ... (first 5 rounds)
+  Total Communication:   417.5283
+  Quality Metrics:
+    Mean:     0.765099
+    Median:   0.757069
+    Std Dev:  0.094596
+    Variance: 0.008948
+    Range:    [0.625916, 0.922656]
+  Accuracy History:      ['0.0383', '0.0765', '0.1148', '0.1530', '0.1913'] ... (first 5 rounds)
 
 
 DynamicProgramming:
-  Final Accuracy:        0.7663 ± 0.0000
+  Final Accuracy:        0.8285 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
-  Total Communication:   661.3490
-  Accuracy History:      ['0.0383', '0.0766', '0.1149', '0.1533', '0.1916'] ... (first 5 rounds)
+  Total Communication:   640.8719
+  Quality Metrics:
+    Mean:     0.828518
+    Median:   0.814733
+    Std Dev:  0.059504
+    Variance: 0.003541
+    Range:    [0.748191, 0.937971]
+  Accuracy History:      ['0.0414', '0.0829', '0.1243', '0.1657', '0.2071'] ... (first 5 rounds)
 
 
 ================================================================================
@@ -68,24 +104,42 @@ SCENARIO: HighlyHeterogeneous
 
 
 Random:
-  Final Accuracy:        0.7832 ± 0.0000
+  Final Accuracy:        0.7661 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
-  Total Communication:   761.9947
-  Accuracy History:      ['0.0392', '0.0783', '0.1175', '0.1566', '0.1958'] ... (first 5 rounds)
+  Total Communication:   687.0644
+  Quality Metrics:
+    Mean:     0.766080
+    Median:   0.772880
+    Std Dev:  0.109001
+    Variance: 0.011881
+    Range:    [0.608796, 0.946975]
+  Accuracy History:      ['0.0383', '0.0766', '0.1149', '0.1532', '0.1915'] ... (first 5 rounds)
 
 
 Greedy:
-  Final Accuracy:        0.8136 ± 0.0000
+  Final Accuracy:        0.8661 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
-  Total Communication:   763.0865
-  Accuracy History:      ['0.0407', '0.0814', '0.1220', '0.1627', '0.2034'] ... (first 5 rounds)
+  Total Communication:   331.0202
+  Quality Metrics:
+    Mean:     0.866115
+    Median:   0.859936
+    Std Dev:  0.053588
+    Variance: 0.002872
+    Range:    [0.763933, 0.948263]
+  Accuracy History:      ['0.0433', '0.0866', '0.1299', '0.1732', '0.2165'] ... (first 5 rounds)
 
 
 DynamicProgramming:
-  Final Accuracy:        0.8162 ± 0.0000
+  Final Accuracy:        0.8661 ± 0.0000
   Convergence Speed:     20.0 ± 0.0 rounds
-  Total Communication:   768.9232
-  Accuracy History:      ['0.0408', '0.0816', '0.1224', '0.1632', '0.2041'] ... (first 5 rounds)
+  Total Communication:   331.0202
+  Quality Metrics:
+    Mean:     0.866115
+    Median:   0.859936
+    Std Dev:  0.053588
+    Variance: 0.002872
+    Range:    [0.763933, 0.948263]
+  Accuracy History:      ['0.0433', '0.0866', '0.1299', '0.1732', '0.2165'] ... (first 5 rounds)
 
 
 ================================================================================
@@ -94,16 +148,40 @@ SUMMARY AND INSIGHTS
 
 
 Homogeneous:
-  Best Accuracy:         Random (0.7700)
-  Best Efficiency:       Random (567.2727 total cost)
-  Greedy/DP Approximation Ratio: 1.0000
+  Best Accuracy:  Random (0.7700)
+  Best Efficiency:  Random (567.2727 total cost)
+  Greedy vs Random:      +0.00% accuracy improvement
+  DP vs Greedy:          +0.00% accuracy improvement
+  Greedy/DP Ratio:       1.0000
+
+  Quality Metrics Comparison:
+    Random Mean Quality:      0.770000
+    Greedy Mean Quality:      0.770000
+    Quality Improvement:      +0.00%
+    DP Mean Quality:           0.770000
 
 ModeratelyHeterogeneous:
-  Best Accuracy:         Random (0.7694)
-  Best Efficiency:       Greedy (649.9842 total cost)
-  Greedy/DP Approximation Ratio: 0.9903
+  Best Accuracy:  DynamicProgramming (0.8285)
+  Best Efficiency:  Greedy (417.5283 total cost)
+  Greedy vs Random:      -0.56% accuracy improvement
+  DP vs Greedy:          +8.29% accuracy improvement
+  Greedy/DP Ratio:       0.9235
+
+  Quality Metrics Comparison:
+    Random Mean Quality:      0.769421
+    Greedy Mean Quality:      0.765099
+    Quality Improvement:      -0.56%
+    DP Mean Quality:           0.828518
 
 HighlyHeterogeneous:
-  Best Accuracy:         DynamicProgramming (0.8162)
-  Best Efficiency:       Random (761.9947 total cost)
-  Greedy/DP Approximation Ratio: 0.9967
+  Best Accuracy:  Greedy (0.8661)
+  Best Efficiency:  Greedy (331.0202 total cost)
+  Greedy vs Random:      +13.06% accuracy improvement
+  DP vs Greedy:          +0.00% accuracy improvement
+  Greedy/DP Ratio:       1.0000
+
+  Quality Metrics Comparison:
+    Random Mean Quality:      0.766080
+    Greedy Mean Quality:      0.866115
+    Quality Improvement:      +13.06%
+    DP Mean Quality:           0.866115
